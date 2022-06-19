@@ -1,0 +1,15 @@
+ESP mac addresses:
+
+Controller:
+BC:FF:4D:81:7D:DD
+
+
+Receivers:
+BC:FF:4D:81:8A:CA
+7C:87:CE:81:B6:54
+BC:FF:4D:81:8E:F5
+BC:FF:4D:81:7D:8D
+
+
+
+
