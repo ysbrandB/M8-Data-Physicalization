@@ -1,13 +1,37 @@
-//Project module 6 Create VER-WER-PE-LIJK
-//This code is created and adapted by the VER-WER-PE-LIJK team to be able to play games using connected esp8266's and let the modules react to the game states
+//Project module 8 Create data-physicalization
+//This code is created and adapted by Ysbrand Burgstede to be able to send the selected year to all subsystems and their esp8266.
 //the espnow- section of this code is largely inspired by https://github.com/bnbe-club/esp-now-examples-diy-62 which is under the creative commons license 'CC0 1.0 Universal'
+
 #include<ESP8266WiFi.h>
 #include<espnow.h>
 
 #define WIFI_CHANNEL    1
 #define MAX_MESSAGE_LENGTH 12
-#define MY_NAME         "CONTROLLER"
 #define membersof(x) (sizeof(x) / sizeof(x[0]))
+
+enum nodeStates {
+  ALL,
+  SMOKE,
+  BUILDINGS,
+  SOUND,
+  LEDs
+};
+
+String translation[5] = {
+  "ALL",
+  "SMOKE",
+  "BUILDINGS",
+  "SOUND",
+  "LEDs"
+};
+
+enum nodeStates selected = ALL;
+enum nodeStates whoAmI = ALL;
+struct __attribute__((packed)) dataPacket {
+  enum nodeStates whoAmI;
+  int year;
+  enum nodeStates selected;
+};
 
 uint8_t receiverAddresses[][8] =
 { {0xBC, 0xFF, 0x4D, 0x81, 0x8A, 0xCA},
@@ -17,11 +41,6 @@ uint8_t receiverAddresses[][8] =
 };
 
 String receivedMacAdresses[membersof(receiverAddresses)];
-
-struct __attribute__((packed)) dataPacket {
-  boolean pressed;
-  int year;
-};
 
 float startTime;
 float interval = 3000;
@@ -44,23 +63,12 @@ void dataReceived(uint8_t *senderMac, uint8_t *data, uint8_t dataLength) {
   dataPacket packet;
 
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x", senderMac[0], senderMac[1], senderMac[2], senderMac[3], senderMac[4], senderMac[5]);
-
-  Serial.println();
-  Serial.print("Received data from: ");
-  Serial.println(macStr);
   memcpy(&packet, data, sizeof(packet));
-
-  if (packet.pressed) {
-    for (int i = 0; i < membersof(receivedMacAdresses); i++) {
-      if (receivedMacAdresses[i].equals(macStr)) {
-        break;
-      }
-      else if (receivedMacAdresses[i] == NULL) {
-        receivedMacAdresses[i] = macStr;
-        break;
-      }
-    }
-  }
+  Serial.println();
+  Serial.print("Received data from |");
+  Serial.print(translation[packet.whoAmI] + "| ");
+  Serial.println(macStr);
+  Serial.println();
 }
 
 void setup() {
@@ -68,8 +76,6 @@ void setup() {
 
   Serial.println();
   Serial.println();
-  Serial.println();
-  Serial.print(MY_NAME);
   Serial.println("...initializing...");
 
   WiFi.mode(WIFI_STA);
@@ -94,31 +100,21 @@ void loop() {
   if (millis() - startTime >= interval) {
     startTime = millis();
 
-    dataPacket packet;
-    packet.pressed = iAmPressed;
-    packet.year = year;
-    Serial.println("Connected:" + String(totalConnected));
-    Serial.println("");
-    pressedThisGame = 0;
-    for (int i = 0; i < membersof(receivedMacAdresses); i++) {
-      if (receivedMacAdresses[i] != NULL) {
-        Serial.println("THIS ONE IS PRESSED " + String(receivedMacAdresses[i]));
-
-        pressedThisGame += 1;
-        receivedMacAdresses[i] = "";
-      }
-    }
-
-    Serial.println("totalPressed:" + String(pressedThisGame));
+    Serial.println("--------------------------");
+    Serial.println("Connected: " + String(totalConnected));
     Serial.println("year: " + String(year));
-    Serial.println("");
+    
+    dataPacket packet;
+    packet.selected = selected;
+    packet.year = year;
+    
     totalConnected = 0;
-    Serial.println(membersof(receiverAddresses));
     for (int i = 0; i < membersof(receiverAddresses); i++) {
       esp_now_send(receiverAddresses[i], (uint8_t *) &packet, sizeof(packet));
-    }
+    }    
   }
   updateSerial();
+
 }
 
 void updateSerial() {
