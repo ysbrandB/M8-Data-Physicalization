@@ -64,13 +64,12 @@ void dataReceived(uint8_t *senderMac, uint8_t *data, uint8_t dataLength) {
 
   Serial.print("whoIsSender: ");
   Serial.println(packet.whoAmI);
-  Serial.print("year: ");
+  Serial.print("packet year: ");
   Serial.println(packet.year);
-  Serial.print("selected: ");
+  Serial.print("packet selected: ");
   Serial.println(packet.selected);
-  if (year != packet.year) {
-    year = packet.year;
-  }
+  year = packet.year;
+  selected=packet.selected;
 }
 
 void setup() {
