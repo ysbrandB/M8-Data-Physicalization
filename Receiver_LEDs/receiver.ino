@@ -83,6 +83,9 @@ void setup() {
 
   startTime = millis();
   actuateTime = millis();
+
+  FastLED.addLeds<WS2811, 5, GRB>(leds, NUM_LEDS);
+    
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();        // we do not want to connect to a WiFi network
 
@@ -109,18 +112,24 @@ void loop() {
     packet.whoAmI = whoAmI;
     esp_now_send(receiverAddress, (uint8_t *) &packet, sizeof(packet));
   }
-//  if (millis() - actuateTime >= actuateInterval) {
-//    actuateTime = millis();
+  if (millis() - actuateTime >= actuateInterval) {
+    actuateTime = millis();
     if (selected == whoAmI || selected == ALL) {
       doActuate();
-//    }
+    }
   }
+  FastLED.show();
 }
 
+bool switch1 = true;
 void doActuate() {
   //PUT CODE HERE FOR YOUR ACTUATOR!
   for (int i = 0; i <= NUM_LEDS; i++) {
-    leds[i] = CRGB::Red; 
+    if (switch1) {
+      leds[i] = CRGB::Red;
+    } else {
+      leds[i] = CRGB::Blue;
+    }
   }
-  FastLED.show();
+  switch1 = !switch1;
 }
