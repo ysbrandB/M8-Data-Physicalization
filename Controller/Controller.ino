@@ -9,6 +9,20 @@
 #define MAX_MESSAGE_LENGTH 12
 #define membersof(x) (sizeof(x) / sizeof(x[0]))
 
+#include <SPI.h>
+#include <MFRC522.h>
+#define SS_PIN D8
+#define RST_PIN D0
+MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class
+
+byte uids[][4] = {
+  {224, 87, 84, 25},
+  {10, 115, 204, 36},
+  {10, 66, 118, 36},
+  {186, 120, 6, 25},
+  {186, 104, 31, 25}
+};
+
 enum nodeStates {
   ALL,
   SMOKE,
@@ -44,7 +58,9 @@ String receivedMacAdresses[membersof(receiverAddresses)];
 
 float startTime;
 float interval = 3000;
-int year = 0;
+float loopTime;
+float loopInterval = 3000;
+int year = 1970;
 int totalConnected = 0;
 
 
@@ -78,6 +94,9 @@ void setup() {
   Serial.println();
   Serial.println("...initializing...");
 
+  SPI.begin(); // Init SPI bus
+  rfid.PCD_Init(); // Init MFRC522
+
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();        // we do not want to connect to a WiFi network
 
@@ -93,6 +112,7 @@ void setup() {
     esp_now_add_peer(receiverAddresses[i], ESP_NOW_ROLE_COMBO, WIFI_CHANNEL, NULL, 0);
   }
   startTime = millis();
+  
   Serial.println("Initialized.");
 }
 
@@ -103,6 +123,7 @@ void loop() {
     Serial.println("--------------------------");
     Serial.println("Connected: " + String(totalConnected));
     Serial.println("year: " + String(year));
+    Serial.println("selected: " + String(selected));
     
     dataPacket packet;
     packet.selected = selected;
@@ -113,8 +134,33 @@ void loop() {
       esp_now_send(receiverAddresses[i], (uint8_t *) &packet, sizeof(packet));
     }    
   }
+  if (millis() - loopTime >= loopInterval) {
+    loopTime = millis();
+    year+=1;
+    if(year>2030){
+      year=1970;
+     }
+//     need to omit 1989 from the ring because Frank and Tristan did a fukkiewukkie
+     if(year==1989){
+      year=1990;
+      }
+  }
   updateSerial();
 
+  if ( ! rfid.PICC_IsNewCardPresent())
+    return;
+  // Verify if the NUID has been readed
+  if ( ! rfid.PICC_ReadCardSerial())
+    return;
+
+  for (byte i = 0; i < 5; i++) {
+    if (rfid.uid.uidByte[0] == uids[i][0] && rfid.uid.uidByte[1] == uids[i][1] && rfid.uid.uidByte[2] == uids[i][2] && rfid.uid.uidByte[3] == uids[i][3]) {
+      selected=static_cast<nodeStates>(i);
+    }
+  }
+  rfid.PICC_HaltA();
+  // Stop encryption on PCD
+  rfid.PCD_StopCrypto1();
 }
 
 void updateSerial() {
