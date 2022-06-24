@@ -64,6 +64,13 @@ int year = 1970;
 int totalConnected = 0;
 
 
+volatile  int position;
+int phaseA = 4;
+int phaseB = 5;
+int debounceInt = 1000;
+long debounceTimer;
+long lastDebounceTime;
+
 void transmissionComplete(uint8_t *receiver_mac, uint8_t transmissionStatus) {
   if (transmissionStatus == 0) {
     Serial.println("Data sent successfully");
@@ -80,11 +87,9 @@ void dataReceived(uint8_t *senderMac, uint8_t *data, uint8_t dataLength) {
 
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x", senderMac[0], senderMac[1], senderMac[2], senderMac[3], senderMac[4], senderMac[5]);
   memcpy(&packet, data, sizeof(packet));
-  Serial.println();
   Serial.print("Received data from |");
   Serial.print(translation[packet.whoAmI] + "| ");
   Serial.println(macStr);
-  Serial.println();
 }
 
 void setup() {
@@ -112,55 +117,89 @@ void setup() {
     esp_now_add_peer(receiverAddresses[i], ESP_NOW_ROLE_COMBO, WIFI_CHANNEL, NULL, 0);
   }
   startTime = millis();
-  
+
+  attachInterrupt(digitalPinToInterrupt(phaseA), encoderA, CHANGE); // triggers on phaseA (port 2)
+  attachInterrupt(digitalPinToInterrupt(phaseB), encoderB, CHANGE); // triggers on phaseB (port 3)
+  lastDebounceTime = millis();
+
   Serial.println("Initialized.");
 }
 
 void loop() {
   if (millis() - startTime >= interval) {
     startTime = millis();
-
+    Serial.println();
     Serial.println("--------------------------");
     Serial.println("Connected: " + String(totalConnected));
     Serial.println("year: " + String(year));
     Serial.println("selected: " + String(selected));
-    
+
     dataPacket packet;
     packet.selected = selected;
     packet.year = year;
-    
+
     totalConnected = 0;
     for (int i = 0; i < membersof(receiverAddresses); i++) {
       esp_now_send(receiverAddresses[i], (uint8_t *) &packet, sizeof(packet));
-    }    
+    }
   }
   if (millis() - loopTime >= loopInterval) {
     loopTime = millis();
-    year+=1;
-    if(year>2030){
-      year=1970;
-     }
-//     need to omit 1989 from the ring because Frank and Tristan did a fukkiewukkie
-     if(year==1989){
-      year=1990;
-      }
+    year += 1;
+    if (year > 2030) {
+      year = 1970;
+    }
+    //     need to omit 1989 from the ring because Frank and Tristan did a fukkiewukkie
+    if (year == 1989) {
+      year = 1990;
+    }
   }
+
+  if (debounceTimer > 0) {
+    debounceTimer = debounceTimer - (millis()- lastDebounceTime);
+    lastDebounceTime = millis();
+    Serial.println(debounceTimer);
+  }
+
   updateSerial();
 
-  if ( ! rfid.PICC_IsNewCardPresent())
+  // Verify there is a new card and if the NUID has been readed
+  if ( ! rfid.PICC_IsNewCardPresent() || ! rfid.PICC_ReadCardSerial()) {
     return;
-  // Verify if the NUID has been readed
-  if ( ! rfid.PICC_ReadCardSerial())
-    return;
+  }
 
   for (byte i = 0; i < 5; i++) {
     if (rfid.uid.uidByte[0] == uids[i][0] && rfid.uid.uidByte[1] == uids[i][1] && rfid.uid.uidByte[2] == uids[i][2] && rfid.uid.uidByte[3] == uids[i][3]) {
-      selected=static_cast<nodeStates>(i);
+      selected = static_cast<nodeStates>(i);
     }
   }
+
   rfid.PICC_HaltA();
   // Stop encryption on PCD
   rfid.PCD_StopCrypto1();
+}
+
+ICACHE_RAM_ATTR void encoderA() // encoder service routine
+{
+  if (debounceTimer <= 0) {
+    debounceTimer = debounceInt;
+    int A = digitalRead(phaseA);
+    int B = digitalRead(phaseB);
+    if ((A == 1 && B == 0) || (A == 0 && B == 1)) position++;
+    if ((A == 1 && B == 1) || (A == 0 && B == 0)) position--;
+  }
+
+}
+
+ICACHE_RAM_ATTR void encoderB() // encoder service routine
+{
+  if (debounceTimer <= 0) {
+    debounceTimer = debounceInt;
+    int A = digitalRead(phaseA);
+    int B = digitalRead(phaseB);
+    if ((A == 1 && B == 0) || (A == 0 && B == 1)) position--;
+    if ((A == 1 && B == 1) || (A == 0 && B == 0)) position++;
+  }
 }
 
 void updateSerial() {
