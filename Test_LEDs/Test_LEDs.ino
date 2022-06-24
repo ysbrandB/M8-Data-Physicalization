@@ -2,17 +2,21 @@
 #include <FastLED.h>
 #define membersof(x) (sizeof(x) / sizeof(x[0]))
 
-const int NUM_LEDS = 60;
+const int NUM_LEDS = 150;
 const int DATA_PIN = 5;
 CRGB leds[NUM_LEDS];
 
 struct car {
-  int pos;
+  float pos;
+  int id;
   boolean alive;
   int distanceTraveld;
+  float velocity;
 };
 
 car LED_cars[10];
+const float maxSpeed = 0.5;
+const float minSpeed = 0.1;
 
 
 void setup() {
@@ -29,9 +33,9 @@ void setup() {
   }
 
   for (int i = 0; i <= membersof(LED_cars); i++) {
-    LED_cars[i] = {0, false, 0};
+    LED_cars[i] = {0, 0, false, 0, 0.5};
   }
-  LED_cars[0] = {0, true, 0};
+  LED_cars[0] = {0, 0, true, 0, 0.1};
 
   delay(250);
   FastLED.clear();  // clear all pixel data
@@ -51,39 +55,49 @@ void loop() {
         int place = int(random(0, NUM_LEDS));
         boolean allowedToSpawn = true;
         for (int j = 0; j < membersof(LED_cars); j++) {
-          if ((LED_cars[i].pos == (place >= NUM_LEDS ? place - NUM_LEDS : place) || LED_cars[i].pos == (place+1 >= NUM_LEDS ? place + 1 - NUM_LEDS : place +1)) && LED_cars[j].alive) {
+          if ((LED_cars[i].id == (place >= NUM_LEDS ? place - NUM_LEDS : place) || LED_cars[i].id == (place + 1 >= NUM_LEDS ? place + 1 - NUM_LEDS : place + 1) || LED_cars[i].id == (place - 1 >= NUM_LEDS ? place - 1 - NUM_LEDS : place - 1)) && LED_cars[j].alive) {
             allowedToSpawn = false;
             break;
           }
 
           if (allowedToSpawn)
             LED_cars[i].pos = place;
+          LED_cars[i].id = place;
           LED_cars[i].alive = true;
         }
       }
     }
     else { // when it is alive
       boolean allowedToMove = true;
+      boolean travicJamBehind = false;
       for (int j = 0; j < membersof(LED_cars); j++) {
-        if (LED_cars[j].pos == (LED_cars[i].pos + 2 >= NUM_LEDS ? LED_cars[i].pos + 2 - NUM_LEDS : LED_cars[i].pos + 2) && LED_cars[j].alive) {
+        if (LED_cars[j].id == (LED_cars[i].id + 2 >= NUM_LEDS ? LED_cars[i].id + 2 - NUM_LEDS : LED_cars[i].id + 2) && LED_cars[j].alive) {
           allowedToMove = false;
-          break;
+        }
+        if ((LED_cars[j].id == (LED_cars[i].id - 2 >= NUM_LEDS ? LED_cars[i].id - 2 - NUM_LEDS : LED_cars[i].id - 2) || LED_cars[j].id == (LED_cars[i].id - 3 >= NUM_LEDS ? LED_cars[i].id - 3 - NUM_LEDS : LED_cars[i].id - 3)) && LED_cars[j].alive) {
+          travicJamBehind = true;
         }
       }
 
+      LED_cars[i].velocity = (travicJamBehind ? minSpeed : maxSpeed);
+
       // move it forward one more
       if (allowedToMove) {
-        LED_cars[i].pos += 1;
-        if (LED_cars[i].pos >= NUM_LEDS) LED_cars[i].pos = 0;
+        LED_cars[i].pos += LED_cars[i].velocity;
+        LED_cars[i].distanceTraveld += LED_cars[i].velocity;
+
+        if (int(LED_cars[i].pos) >= NUM_LEDS) LED_cars[i].pos = LED_cars[i].pos - NUM_LEDS;
+        LED_cars[i].id = int(LED_cars[i].pos);
+
       }
 
       // show a LED
-      leds[LED_cars[i].pos] = CRGB::Red;
-      leds[(LED_cars[i].pos + 1 >= NUM_LEDS ? 0 : LED_cars[i].pos + 1)] = CRGB::White;
+      leds[LED_cars[i].id] = CRGB::Red;
+      leds[(LED_cars[i].id + 1 >= NUM_LEDS ? 0 : LED_cars[i].id + 1)] = CRGB::White;
 
 
       // there is a chance for it to die
-      if (int(random(0, 10)) == 0) {
+      if (LED_cars[i].distanceTraveld >= NUM_LEDS - int(random(0, NUM_LEDS / 3))) {
         LED_cars[i].alive = false;
       }
     }
@@ -91,5 +105,5 @@ void loop() {
 
   FastLED.show();
 
-  delay(500);
+  delay(100);
 }
