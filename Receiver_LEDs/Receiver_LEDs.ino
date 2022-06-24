@@ -142,10 +142,10 @@ void setup() {
 
   // init the cars
   for (int i = 0; i <= membersof(LED_cars); i++) {
-    LED_cars[i] = {0, 0, false, 0, maxSpeed, maxSpeed};
+    LED_cars[i] = {0, 0, false, 0, float(int(random(maxSpeed*10, minSpeed*10)))/10, float(int(random(maxSpeed*10, minSpeed*10)))/10};
   }
   // grandma car //TODO REMOVE THIS
-  LED_cars[0] = {0, 0, true, 0, minSpeed, minSpeed};
+//  LED_cars[0] = {0, 0, true, 0, minSpeed, minSpeed};
 
   // clear everything
   delay(250);
@@ -211,7 +211,7 @@ void doActuate() {
             LED_cars[i].pos = place;
             LED_cars[i].id = place;
             LED_cars[i].alive = true;
-            LED_cars[i].baseVelocity = (i == 0 ? (maxSpeed + minSpeed) / 2 : maxSpeed); //TODO CHANGE THIS TO A RANDOM SPEED
+            LED_cars[i].baseVelocity = float(int(random(maxSpeed*10, minSpeed*10)))/10;  // (i == 0 ? (maxSpeed + minSpeed) / 2 : maxSpeed); //TODO CHANGE THIS TO A RANDOM SPEED
             LED_cars[i].velocity = LED_cars[i].baseVelocity;
           }
         }
