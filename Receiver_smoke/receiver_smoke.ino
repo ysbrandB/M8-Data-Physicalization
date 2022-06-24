@@ -25,7 +25,7 @@ enum nodeStates {
 //Change this to the purpose of your node! check the possibilities in the enum above!
 enum nodeStates whoAmI = SMOKE;
 //defines how often your actuate function gets called! 1000=once every second.
-int actuateInterval = 1000;
+int actuateInterval = 3000;
 
 //interval for sending
 int interval = 3000;
@@ -85,7 +85,7 @@ void setup() {
 
 //  pinMode(relay, OUTPUT);
 pinMode(RELAY, OUTPUT);
-digitalWrite(RELAY, HIGH);
+//digitalWrite(RELAY, HIGH);
 
   if (esp_now_init() != 0) {
     Serial.println("ESP-NOW initialization failed");
@@ -121,19 +121,39 @@ void loop() {
 }
 
 
+int smokeTime = 0;
 void doActuate() {
-  //PUT CODE HERE FOR YOUR ACTUATOR!
-
-long value = -6.5517440569062585e-133 * pow(year,46) + 6.805656182938649e-130 * pow(year,45) + 2.341550209108304e-126 * pow(year,44) + 3.530974538531393e-123 * pow(year,43) + 2.399729319491314e-120 * pow(year,42) + -4.4609001974984246e-117 * pow(year,41) + -2.218596911241094e-113 * pow(year,40) + -5.646353780878323e-110 * pow(year,39) + -1.0893759951556788e-106 * pow(year,38) + -1.6525228668235932e-103  * pow(year,37) + -1.6953798292162856e-100 * pow(year,36) + 2.2665687148750585e-98 * pow(year,35) + 7.192003056934981e-94 * pow(year,34) + 2.484001292323127e-90 * pow(year,33) + 6.192897978992189e-87 * pow(year,32) + 1.288280438535514e-83 * pow(year,31) + 2.2983391503180903e-80 * pow(year,30) + 3.4066882963115613e-77  * pow(year,29) + 3.5527851557179534e-74 * pow(year,28) + -2.3454949398018666e-72 * pow(year,27) + -1.4811435993296021e-67 * pow(year,26) + -5.393683320108537e-64 * pow(year,25) + -1.4167959051681845e-60 * pow(year,24) + -3.1309793723599106e-57 * pow(year,23) + -6.028754295830673e-54 * pow(year,22) + -9.998791286046552e-51 * pow(year,21) + -1.32118154219509e-47 * pow(year,20) + -9.236985577038295e-45 * pow(year,19) + 1.8684686044932652e-41 * pow(year,18) + 1.0730402874275699e-37 * pow(year,17) + 3.2591762894928917e-34 * pow(year,16) + 7.830130724467377e-31 * pow(year,15) + 1.5969564665421713e-27 * pow(year,14) + 2.7542331220856135e-24 * pow(year,13) + 3.691454681046196e-21 * pow(year,12) + 2.3200056410821942e-18 * pow(year,11) + -6.832757231564678e-15 * pow(year,10) + -3.52569025091928e-11 * pow(year,9) + -1.0169359522579325e-07 * pow(year,8) + -0.00022359807875885738 * pow(year,7) + -0.3758739057297244 * pow(year,6) + -370.3511849305395 * pow(year,5) + 395573.5363661109 * pow(year,4) + 3193665975.170759 * pow(year,3) + 9066408055603.25 * pow(year,2) + 1.1366221113452164e+16 * pow(year,1) + -3.884265475935697e+19 * pow(year,0);
-int mapValue = map(value, 4091445248, 11162517504, 500, 3000) 
-
-// Normally Open configuration, send LOW signal to let current flow
-  digitalWrite(RELAY, LOW);
-  Serial.println("Current Flowing");
-  delay(2000); / Normally Open configuration, send HIGH signal stop current flow
-  digitalWrite(RELAY, HIGH);
-  Serial.println("Current not Flowing");
-  delay(1000);
-
+//  year = random(1970, 2020);
+  year = 1969;
+  if (year > 2020) return;
   
+  long value = -1.7725037169689857e-120 * pow(year,40) + 2.691922781390831e-117 * pow(year,39) + 6.915587849485481e-114 * pow(year,38) + 7.351942178209149e-111 * pow(year,37) + -2.3046173656774446e-108 * pow(year,36) + -3.0768419146221935e-104 * pow(year,35) + -8.546394975866965e-101 * pow(year,34) + -1.6201824022196218e-97 * pow(year,33) + -2.20419206240899e-94 * pow(year,32) + -1.4160228915850454e-91 * pow(year,31) + 3.3675774870946775e-88 * pow(year,30) + 1.6882527900161895e-84 * pow(year,29) + 4.597919911280918e-81 * pow(year,28) + 9.711766071571068e-78 * pow(year,27) + 1.6704453004982314e-74 * pow(year,26) + 2.199008366025155e-71 * pow(year,25) + 1.3908445097492863e-68 * pow(year,24) + -3.5798630593631726e-65 * pow(year,23) + -1.8378838086785712e-61 * pow(year,22) + -5.247065704730748e-58 * pow(year,21) + -1.1798812837169494e-54 * pow(year,20) + -2.2113285686946442e-51 * pow(year,19) + -3.35892203902774e-48 * pow(year,18) + -3.4107302166127626e-45 * pow(year,17) + 1.035442206875168e-42 * pow(year,16) + 1.7617247645614831e-38 * pow(year,15) + 6.024025869542864e-35 * pow(year,14) + 1.4853625707674114e-31 * pow(year,13) + 2.9541439019403738e-28 * pow(year,12) + 4.646553734953138e-25 * pow(year,11) + 4.615942646555994e-22 * pow(year,10) + -2.7605406395181116e-19 * pow(year,9) + -2.9649720679057393e-15 * pow(year,8) + -9.508570018619388e-12 * pow(year,7) + -2.1075593646903026e-08 * pow(year,6) + -3.225614216839399e-05 * pow(year,5) + -0.015906093258578054 * pow(year,4) + 100.20446827526675 * pow(year,3) + 411729.9704703481 * pow(year,2) + 673447029.6980231 * pow(year,1) + -1643973335264.2969 * pow(year,0);
+  int mapValue = map(value, 0, 100, 1000, 5000);
+  Serial.print("year: ");
+  Serial.println(year);
+
+  Serial.print("value: ");
+  Serial.println(value);
+
+  Serial.print("mapValue: ");
+  Serial.println(mapValue);
+
+  int smokeInterval = mapValue;
+//  int smokeInterval = 3000;
+  if (millis() - smokeTime >= smokeInterval) {
+    smokeTime = millis(); 
+    // Normally Open configuration, send LOW signal to let current flow
+    digitalWrite(RELAY, LOW);
+    Serial.println("Current Flowing");
+   }
+//   digitalWrite(RELAY, HIGH);
+//   Serial.println("Current not Flowing");
+   
+   int noSmokeInterval = 5000 - smokeInterval;
+   if (millis() - smokeTime >= noSmokeInterval) {
+   // Normally Open configuration, send HIGH signal stop current flow
+   digitalWrite(RELAY, HIGH);
+   Serial.println("Current not Flowing");
+   }
+    
 }
