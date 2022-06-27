@@ -233,7 +233,7 @@ void doActuate() {
       }
 
       //
-      LED_cars[i].velocity = (travicJamBehind ? minSpeed : LED_cars[i].baseVelocity);
+      LED_cars[i].velocity = (travicJamBehind ? max(minSpeed, LED_cars[i].baseVelocity/2) : LED_cars[i].baseVelocity);
 
       // move the car forwards
       if (allowedToMove) {
