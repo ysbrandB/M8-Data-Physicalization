@@ -185,8 +185,8 @@ ICACHE_RAM_ATTR void encoderA() // encoder service routine
     debounceTimer = debounceInt;
     int A = digitalRead(phaseA);
     int B = digitalRead(phaseB);
-    if ((A == 1 && B == 0) || (A == 0 && B == 1)) position++;
-    if ((A == 1 && B == 1) || (A == 0 && B == 0)) position--;
+    if ((A == 1 && B == 0) || (A == 0 && B == 1)) position+=0.5;
+    if ((A == 1 && B == 1) || (A == 0 && B == 0)) position-=0.5;
   }
 
 }
@@ -197,8 +197,8 @@ ICACHE_RAM_ATTR void encoderB() // encoder service routine
     debounceTimer = debounceInt;
     int A = digitalRead(phaseA);
     int B = digitalRead(phaseB);
-    if ((A == 1 && B == 0) || (A == 0 && B == 1)) position--;
-    if ((A == 1 && B == 1) || (A == 0 && B == 0)) position++;
+    if ((A == 1 && B == 0) || (A == 0 && B == 1)) position-=0.5;
+    if ((A == 1 && B == 1) || (A == 0 && B == 0)) position+=0.5;
   }
 }
 
