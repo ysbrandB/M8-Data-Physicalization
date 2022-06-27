@@ -142,10 +142,10 @@ void setup() {
 
   // init the cars
   for (int i = 0; i <= membersof(LED_cars); i++) {
-    LED_cars[i] = {0, 0, false, 0, float(int(random(maxSpeed*10, minSpeed*10)))/10, float(int(random(maxSpeed*10, minSpeed*10)))/10};
+    LED_cars[i] = {0, 0, false, 0, float(int(random(maxSpeed * 10, minSpeed * 10))) / 10, float(int(random(maxSpeed * 10, minSpeed * 10))) / 10};
   }
   // grandma car //TODO REMOVE THIS
-//  LED_cars[0] = {0, 0, true, 0, minSpeed, minSpeed};
+  //  LED_cars[0] = {0, 0, true, 0, minSpeed, minSpeed};
 
   // clear everything
   delay(250);
@@ -178,8 +178,14 @@ void loop() {
 // This method is called when the year is changed
 void updateYear(int year) {
   // TODO add the dataset year change thingy here
-  int yearData = map(values[indexOfArray(year, years)], 0, 100, 1, 50);
+  for (int i = 0; i < membersof(years); i++) {
+    if (year == years[i]) {
+      yearData = int(map(values[i], 0, 100, 1, 50));
+      break;
+    }
+  }
   Serial.println(yearData);
+
   for (int j = 0; j < membersof(LED_cars); j++) {
     LED_cars[j].alive = false;
   }
@@ -187,10 +193,10 @@ void updateYear(int year) {
 
 // this function is called every actuate interval (200ms)
 void doActuate() {
-  Serial.println("---------------");
+  //  Serial.println("---------------");
   // loop trough and update all the cars
   for (int i = 0; i < yearData; i++) {
-    Serial.println(LED_cars[i].pos);
+    //    Serial.println(LED_cars[i].pos);
 
     // test if the current car is alive or dead
     if (!LED_cars[i].alive) { // then it's dead, and has a change to respawn
@@ -211,7 +217,7 @@ void doActuate() {
             LED_cars[i].pos = place;
             LED_cars[i].id = place;
             LED_cars[i].alive = true;
-            LED_cars[i].baseVelocity = float(int(random(maxSpeed*10, minSpeed*10)))/10;  // (i == 0 ? (maxSpeed + minSpeed) / 2 : maxSpeed); //TODO CHANGE THIS TO A RANDOM SPEED
+            LED_cars[i].baseVelocity = float(int(random(maxSpeed * 10, minSpeed * 10))) / 10; // (i == 0 ? (maxSpeed + minSpeed) / 2 : maxSpeed); //TODO CHANGE THIS TO A RANDOM SPEED
             LED_cars[i].velocity = LED_cars[i].baseVelocity;
           }
         }
@@ -233,7 +239,7 @@ void doActuate() {
       }
 
       //
-      LED_cars[i].velocity = (travicJamBehind ? max(minSpeed, LED_cars[i].baseVelocity/2) : LED_cars[i].baseVelocity);
+      LED_cars[i].velocity = (travicJamBehind ? max(minSpeed, LED_cars[i].baseVelocity / 2) : LED_cars[i].baseVelocity);
 
       // move the car forwards
       if (allowedToMove) {
@@ -257,10 +263,12 @@ void doActuate() {
   }
 }
 
-int indexOfArray(float wantedval, float arr[]) {
-  for (int i = 0; i < membersof(arr); i++) {
-    if (wantedval = arr[i]) {
-      return i;
-    }
-  }
-}
+//int indexOfArray(float wantedval, float arr[]) {
+//  Serial.print("length: ");
+//  Serial.println(membersof(arr));
+//  for (int i = 0; i < membersof(arr); i++) {
+//    if (wantedval == arr[i]) {
+//      return i;
+//    }
+//  }
+//}
