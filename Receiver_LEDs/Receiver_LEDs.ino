@@ -18,7 +18,8 @@ enum nodeStates {
   SMOKE,
   BUILDINGS,
   SOUND,
-  LEDs
+  LEDs,
+  HOUSES
 };
 
 //DEFINES which commands the esp is listening to: by default it listens to ALL and itself(whoAmI).
@@ -106,7 +107,7 @@ void dataReceived(uint8_t *senderMac, uint8_t *data, uint8_t dataLength) {
 
 void setup() {
   Serial.begin(115200);     // initialize serial port
-  FastLED.addLeds<WS2811, 5, GRB>(leds, NUM_LEDS);
+  FastLED.addLeds<WS2811, 0, GRB>(leds, NUM_LEDS);
 
   // clear the leds
   FastLED.clear();  // clear all pixel data
