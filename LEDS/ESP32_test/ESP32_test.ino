@@ -1,17 +1,17 @@
 //Project module 8 Create data-physicalization
-//This code is created and adapted by Ysbrand Burgstede to be able to receive years from the sender esp8266 and let the modules react to the given year.
-//And extended upon by Frank Bosman for the LED simulation.
+//This code was enspired from an code created and adapted by Ysbrand Burgstede to be able to receive years from the sender esp8266 and let the modules react to the given year.
+//And it is extended upon by Frank Bosman for the LED simulation.
 //the espnow- section of this code is largely inspired by https://github.com/bnbe-club/esp-now-examples-diy-62 which is under the creative commons license 'CC0 1.0 Universal'
 
 #define membersof(x) (sizeof(x) / sizeof(x[0]))
 
 //ESP Now connectivity -------------
-#include<ESP8266WiFi.h>
-#include<espnow.h>
-
-#define WIFI_CHANNEL    1
-
-//BC:FF:4D:81:7D:DD
+//#include<ESP32WiFi.h>
+//#include<espnow.h>
+//
+//#define WIFI_CHANNEL    1
+//
+////BC:FF:4D:81:7D:DD
 uint8_t receiverAddress[] = {0xBC, 0xFF, 0x4D, 0x81, 0x7D, 0xDD};   // CONTROLLER
 enum nodeStates {
   ALL,
@@ -50,14 +50,9 @@ int oldYear = 0;
 #include <FastLED.h>
 const int NUM_LEDS = 150;
 const int NUM_LEDS_HOUSES = 170;
-const int NUM_LEDS_CANAL = 40;
 
 CRGB leds[NUM_LEDS];
 CRGB ledsHouse[NUM_LEDS_HOUSES];
-CRGB ledsCanal[NUM_LEDS_CANAL];
-CRGB ledsControl[1];
-CRGB ledsOtherMoreDiffControl[5];
-
 
 struct car {
   float pos;
@@ -82,76 +77,58 @@ const int startYearHouses = 1970;
 const int endYearHouses = 2019;
 int housesPerYear[] = {1, 2, 4, 4, 5, 6, 7, 8, 9, 10, 12, 13, 16, 18, 21, 23, 25, 27, 31, 34, 37, 40, 43, 46, 47, 50, 51, 54, 57, 59, 62, 64, 66, 68, 69, 71, 74, 78, 81, 84, 86, 88, 89, 90, 92, 94, 96, 99, 100, 100};
 int amountHouses = 10;
-float rainbowBarf = 0;
-
-//ControlLeds
-int controlYears[][2] = {
-  {1970, 2030},
-  {1970, 2020},
-  {1970, 2030},
-  {1998, 2021},
-  {2000, 2021},
-  {1970, 2019}
-};
+int rainbowBarf = 0;
 
 
-void transmissionComplete(uint8_t *receiver_mac, uint8_t transmissionStatus) {
-  if (transmissionStatus == 0) {
-    Serial.println("Data sent successfully");
-  } else {
-    Serial.print("Error code: ");
-    Serial.println(transmissionStatus);
-  }
-}
+//void transmissionComplete(uint8_t *receiver_mac, uint8_t transmissionStatus) {
+//  if (transmissionStatus == 0) {
+//    Serial.println("Data sent successfully");
+//  } else {
+//    Serial.print("Error code: ");
+//    Serial.println(transmissionStatus);
+//  }
+//}
 
-IRAM_ATTR void dataReceived(uint8_t *senderMac, uint8_t *data, uint8_t dataLength) {
-  dataPacket packet;
-
-  memcpy(&packet, data, sizeof(packet));
-
-  Serial.print("whoIsSender: ");
-  Serial.println(packet.whoAmI);
-  Serial.print("packet year: ");
-  Serial.println(packet.year);
-  Serial.print("packet selected: ");
-  Serial.println(packet.selected);
-  year = packet.year;
-  selected = packet.selected;
-
-  if (year != oldYear) {
-    oldYear = year;
-    updateYear(year);
-  }
-}
+//IRAM_ATTR void dataReceived(uint8_t *senderMac, uint8_t *data, uint8_t dataLength) {
+//  dataPacket packet;
+//
+//  memcpy(&packet, data, sizeof(packet));
+//
+//  Serial.print("whoIsSender: ");
+//  Serial.println(packet.whoAmI);
+//  Serial.print("packet year: ");
+//  Serial.println(packet.year);
+//  Serial.print("packet selected: ");
+//  Serial.println(packet.selected);
+//  year = packet.year;
+//  selected = packet.selected;
+//
+//  if (year != oldYear) {
+//    oldYear = year;
+//    updateYear(year);
+//  }
+//}
 
 void setup() {
   Serial.begin(115200);     // initialize serial port
 
   // LED strips
-  FastLED.addLeds<WS2811, 0, GRB>(leds, NUM_LEDS); // port D3
-  FastLED.addLeds<WS2811, 5, GRB>(ledsHouse, NUM_LEDS_HOUSES); // port D1
-  FastLED.addLeds<WS2811, 14, GRB>(ledsCanal, NUM_LEDS_CANAL); // port D5
-  FastLED.addLeds<WS2811, 12, GRB>(ledsControl, 1); // port D6
-  FastLED.addLeds<WS2811, 13, GRB>(ledsOtherMoreDiffControl, 5); // port D7
+  //  FastLED.addLeds<WS2811, 0, GRB>(leds, NUM_LEDS); // cars
+  FastLED.addLeds<WS2811, 13, GRB>(ledsHouse, NUM_LEDS_HOUSES); // houses
 
   // clear the leds
   FastLED.clear();  // clear all pixel data
   FastLED.show();
 
-  // startup animation
-  for (int i = 0; i < NUM_LEDS; i++) {
-    leds[i] = CRGB::Red;
-    delay(int(500.0 / float(NUM_LEDS)));
-    FastLED.show();
-  }
+//  // startup animation
+//  for (int i = 0; i < NUM_LEDS; i++) {
+//    leds[i] = CRGB::Red;
+//    delay(int(500.0 / float(NUM_LEDS)));
+//    FastLED.show();
+//  }
   for (int i = 0; i < NUM_LEDS_HOUSES; i++) {
-    ledsHouse[i] = CHSV(25.5, 75 * 255, 57 * 255);
+    ledsHouse[i] = CHSV(25, int(.75 * 255), int(.57 * 255));
     delay(int(500.0 / float(NUM_LEDS_HOUSES)));
-    FastLED.show();
-  }
-  for (int i = 0; i < NUM_LEDS_CANAL; i++) {
-    ledsCanal[i] = CHSV(25.5, 75 * 255, 57 * 255);
-    delay(int(500.0 / float(NUM_LEDS_CANAL)));
     FastLED.show();
   }
 
@@ -160,66 +137,57 @@ void setup() {
 
 
   // Ysbrand ESP magic:
-  WiFi.mode(WIFI_STA);
-  WiFi.disconnect();        // we do not want to connect to a WiFi network
-
-  if (esp_now_init() != 0) {
-    Serial.println("ESP-NOW initialization failed");
-    year = 0;
-    return;
-  }
-
-  esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
-  esp_now_register_send_cb(transmissionComplete);         // this function will get called once all data is sent
-  esp_now_register_recv_cb(dataReceived);               // this function will get called whenever we receive data
-  esp_now_add_peer(receiverAddress, ESP_NOW_ROLE_COMBO, WIFI_CHANNEL, NULL, 0);
-  Serial.println("ESP-NOW Initialized.");
+  //  WiFi.mode(WIFI_STA);
+  //  WiFi.disconnect();        // we do not want to connect to a WiFi network
+  //
+  //  if (esp_now_init() != 0) {
+  //    Serial.println("ESP-NOW initialization failed");
+  //    year = 0;
+  //    return;
+  //  }
+  //
+  //  esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
+  //  esp_now_register_send_cb(transmissionComplete);         // this function will get called once all data is sent
+  //  esp_now_register_recv_cb(dataReceived);               // this function will get called whenever we receive data
+  //  esp_now_add_peer(receiverAddress, ESP_NOW_ROLE_COMBO, WIFI_CHANNEL, NULL, 0);
+  //  Serial.println("ESP-NOW Initialized.");
 
 
   // init the cars
-  for (int i = 0; i <= membersof(LED_cars); i++) {
-    LED_cars[i] = {0, 0, false, 0, float(int(random(maxSpeed * 10, minSpeed * 10))) / 10, float(int(random(maxSpeed * 10, minSpeed * 10))) / 10};
-  }
+  //  for (int i = 0; i <= membersof(LED_cars); i++) {
+  //    LED_cars[i] = {0, 0, false, 0, float(int(random(maxSpeed * 10, minSpeed * 10))) / 10, float(int(random(maxSpeed * 10, minSpeed * 10))) / 10};
+  //  }
 
   // clear everything
   delay(250);
   FastLED.clear();  // clear all pixel data
-  FastLED.setBrightness(255);
+  FastLED.setBrightness(100); //brightness of the LEDS, max = 255
   FastLED.show();
 }
 
 void loop() {
-  FastLED.setBrightness(255);
   if (millis() - startTime >= interval) {
-    startTime = millis();
-    dataPacket packet;
-
-    packet.selected = selected;
-    packet.year = year;
-    packet.whoAmI = whoAmI;
-    esp_now_send(receiverAddress, (uint8_t *) &packet, sizeof(packet));
+    //    startTime = millis();
+    //    dataPacket packet;
+    //
+    //    packet.selected = selected;
+    //    packet.year = year;
+    //    packet.whoAmI = whoAmI;
+    //    esp_now_send(receiverAddress, (uint8_t *) &packet, sizeof(packet));
   }
   if (millis() - actuateTime >= actuateInterval) {
     actuateTime = millis();
-    //    FastLED.clear();  // clear all pixel data
+    FastLED.clear();  // clear all pixel data
 
-    // Show the Canal houses (grachten panten).
-    fill_solid(ledsCanal, NUM_LEDS_CANAL, CHSV(25.5, 75 * 255, 57 * 255));
-
-    if (selected == whoAmI || selected == ALL) {
+    if (selected == whoAmI || selected == ALL) { //cars
       //      doActuate();
-
     }
 
-
-    //    FastLED.show();
+    if (selected == HOUSES || selected == ALL) {
+      doActuateHouses();
+    }
+    FastLED.show();
   }
-  if (selected == HOUSES || selected == ALL) {
-    doActuateHouses();
-  }
-
-  updateControlPanel();
-  FastLED.show();
 }
 
 // This method is called when the year is changed
@@ -321,28 +289,7 @@ void doActuateHouses() {
       }
     }
   } else {
-        rainbowBarf += 0.5;
-        if (rainbowBarf > 255) {
-          rainbowBarf = 0;
-        }
-        fill_rainbow(ledsHouse, NUM_LEDS_HOUSES, int(rainbowBarf));
-//    fill_solid(ledsHouse, NUM_LEDS_HOUSES, CRGB::Blue);
-  }
-}
-
-void updateControlPanel() {
-
-  for (int i = 0; i <= 5; i++) {
-    if (year >= controlYears[i + 1][0] && year <= controlYears[i + 1][1]) {
-      ledsOtherMoreDiffControl[i] = CRGB::Green;
-    } else {
-      ledsOtherMoreDiffControl[i] = CRGB::Red;
-    }
-  }
-
-  if (year >= controlYears[selected][0] && year <= controlYears[selected][1]) {
-    ledsControl[0] = CRGB::Green;
-  } else {
-    ledsControl[0] = CRGB::Red;
+    rainbowBarf = int(millis()/100 % 255);
+    fill_rainbow(ledsHouse, NUM_LEDS_HOUSES, rainbowBarf);
   }
 }
