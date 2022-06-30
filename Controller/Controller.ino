@@ -66,14 +66,14 @@ float startTime;
 float interval = 3000;
 float loopTime;
 float loopInterval = 3000;
-int year = 1970;
+float year = 2000;
 int totalConnected = 0;
 
 
 volatile  int position;
 int phaseA = 4;
 int phaseB = 5;
-int debounceInt = 1000;
+int debounceInt = 10;
 long debounceTimer;
 long lastDebounceTime;
 
@@ -151,22 +151,11 @@ void loop() {
       esp_now_send(receiverAddresses[i], (uint8_t *) &packet, sizeof(packet));
     }
   }
-  if (millis() - loopTime >= loopInterval) {
-    loopTime = millis();
-    year += 1;
-    if (year > 2030) {
-      year = 1970;
-    }
-    //     need to omit 1989 from the ring because Frank and Tristan did a fukkiewukkie
-    if (year == 1989) {
-      year = 1990;
-    }
-  }
 
   if (debounceTimer > 0) {
     debounceTimer = debounceTimer - (millis() - lastDebounceTime);
     lastDebounceTime = millis();
-    Serial.println(debounceTimer);
+    Serial.println(year);
   }
 
   if (digitalRead(BUTTON_PIN)) {
@@ -195,10 +184,19 @@ ICACHE_RAM_ATTR void encoderA() // encoder service routine
     debounceTimer = debounceInt;
     int A = digitalRead(phaseA);
     int B = digitalRead(phaseB);
-    if ((A == 1 && B == 0) || (A == 0 && B == 1)) year += 0.5;
-    if ((A == 1 && B == 1) || (A == 0 && B == 0)) year -= 0.5;
+    if ((A == 1 && B == 0) || (A == 0 && B == 1)) {
+      year += 0.5;
+      if (year >= 2030) {
+        year = 1970;
+      }
+    }
+    if ((A == 1 && B == 1) || (A == 0 && B == 0)) {
+      year -= 0.5;
+      if (year <= 1970) {
+        year = 2030;
+      }
+    }
   }
-
 }
 
 ICACHE_RAM_ATTR void encoderB() // encoder service routine
@@ -207,7 +205,17 @@ ICACHE_RAM_ATTR void encoderB() // encoder service routine
     debounceTimer = debounceInt;
     int A = digitalRead(phaseA);
     int B = digitalRead(phaseB);
-    if ((A == 1 && B == 0) || (A == 0 && B == 1)) year -= 0.5;
-    if ((A == 1 && B == 1) || (A == 0 && B == 0)) year += 0.5;
+    if ((A == 1 && B == 0) || (A == 0 && B == 1)) {
+      year -= 0.5;
+      if (year <= 1970) {
+        year = 2030;
+      }
+    }
+    if ((A == 1 && B == 1) || (A == 0 && B == 0)) {
+      year += 0.5;
+      if (year >= 2030) {
+        year = 1970;
+      }
+    }
   }
 }
