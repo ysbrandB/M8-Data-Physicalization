@@ -49,10 +49,9 @@ int oldYear = 0;
 // LED simulation -------------
 #include <FastLED.h>
 const int NUM_LEDS = 150;
-const int NUM_LEDS_HOUSES = 150;
+const int NUM_LEDS_HOUSES = 170;
 const int NUM_LEDS_CANAL = 40;
 
-const int DATA_PIN = 5;
 CRGB leds[NUM_LEDS];
 CRGB ledsHouse[NUM_LEDS_HOUSES];
 CRGB ledsCanal[NUM_LEDS_CANAL];
@@ -75,8 +74,12 @@ float years[] = {2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 201
 float values[] = { 5.478888,  16.689393,  24.800169,  28.267820,  0.000000,  4.516175,  3.221977,  33.419927,  41.540107,  55.402483,  61.239891,  70.529669,  78.164378,  83.490455,  87.174393,  88.004279,  94.107344,  99.372296,  98.675240,  94.991301,  93.707683,  100.000000};
 int yearData = 10;
 
-int amountHouses = 0;
-
+// houses
+const int startYearHouses = 1970;
+const int endYearHouses = 2019;
+int housesPerYear[] = {1, 2, 4, 4, 5, 6, 7, 8, 9, 10, 12, 13, 16, 18, 21, 23, 25, 27, 31, 34, 37, 40, 43, 46, 47, 50, 51, 54, 57, 59, 62, 64, 66, 68, 69, 71, 74, 78, 81, 84, 86, 88, 89, 90, 92, 94, 96, 99, 100, 100};
+int amountHouses = 10;
+float rainbowBarf = 0;
 
 
 void transmissionComplete(uint8_t *receiver_mac, uint8_t transmissionStatus) {
@@ -121,7 +124,7 @@ void setup() {
   // LED strips
   FastLED.addLeds<WS2811, 0, GRB>(leds, NUM_LEDS); // port D3
   FastLED.addLeds<WS2811, 5, GRB>(ledsHouse, NUM_LEDS_HOUSES); // port D1
-  FastLED.addLeds<WS2811, 14, GRB>(ledsHouse, NUM_LEDS_HOUSES); // port D5
+  FastLED.addLeds<WS2811, 14, GRB>(ledsCanal, NUM_LEDS_CANAL); // port D5
 
 
   // clear the leds
@@ -129,17 +132,17 @@ void setup() {
   FastLED.show();
 
   // startup animation
-  for (int i = 0; i <= NUM_LEDS; i++) {
+  for (int i = 0; i < NUM_LEDS; i++) {
     leds[i] = CRGB::Red;
     delay(int(500.0 / float(NUM_LEDS)));
     FastLED.show();
   }
-  for (int i = 0; i <= NUM_LEDS_HOUSES; i++) {
+  for (int i = 0; i < NUM_LEDS_HOUSES; i++) {
     ledsHouse[i] = CHSV(25.5, 75 * 255, 57 * 255);
     delay(int(500.0 / float(NUM_LEDS_HOUSES)));
     FastLED.show();
   }
-  for (int i = 0; i <= NUM_LEDS_CANAL; i++) {
+  for (int i = 0; i < NUM_LEDS_CANAL; i++) {
     ledsCanal[i] = CHSV(25.5, 75 * 255, 57 * 255);
     delay(int(500.0 / float(NUM_LEDS_CANAL)));
     FastLED.show();
@@ -170,8 +173,6 @@ void setup() {
   for (int i = 0; i <= membersof(LED_cars); i++) {
     LED_cars[i] = {0, 0, false, 0, float(int(random(maxSpeed * 10, minSpeed * 10))) / 10, float(int(random(maxSpeed * 10, minSpeed * 10))) / 10};
   }
-  // grandma car //TODO REMOVE THIS
-  //  LED_cars[0] = {0, 0, true, 0, minSpeed, minSpeed};
 
   // clear everything
   delay(250);
@@ -191,36 +192,36 @@ void loop() {
   }
   if (millis() - actuateTime >= actuateInterval) {
     actuateTime = millis();
-    FastLED.clear();  // clear all pixel data
+    //    FastLED.clear();  // clear all pixel data
 
     // Show the Canal houses (grachten panten).
-    for (int i = 0; i <= NUM_LEDS_CANAL; i++) {
-      ledsCanal[i] = CHSV(25.5, 75 * 255, 57 * 255);
-      delay(int(500.0 / float(NUM_LEDS_CANAL)));
-      FastLED.show();
-    }
+    fill_solid(ledsCanal, NUM_LEDS_CANAL, CHSV(25.5, 75 * 255, 57 * 255));
 
     if (selected == whoAmI || selected == ALL) {
-      doActuate();
-    }
-    if (selected == HOUSES || selected == ALL) {
-      doActuateHouses();
+      //      doActuate();
+
     }
 
-    FastLED.show();
+
+    //    FastLED.show();
   }
+  if (selected == HOUSES || selected == ALL) {
+    doActuateHouses();
+  }
+  FastLED.show();
 }
 
 // This method is called when the year is changed
 void updateYear(int year) {
-  // TODO add the dataset year change thingy here
   for (int i = 0; i < membersof(years); i++) {
     if (year == years[i]) {
       yearData = int(map(values[i], 0, 100, 1, 50));
       break;
     }
   }
-  Serial.println(yearData);
+
+  amountHouses = min(housesPerYear[min(int(float(year - startYearHouses) * float(NUM_LEDS_HOUSES) / 100), 49)], NUM_LEDS_HOUSES);
+  Serial.println(amountHouses + amountHouses);
 
   for (int j = 0; j < membersof(LED_cars); j++) {
     LED_cars[j].alive = false;
@@ -229,7 +230,6 @@ void updateYear(int year) {
 
 // this function is called every actuate interval (200ms)
 void doActuate() {
-  //  Serial.println("---------------");
   // loop trough and update all the cars
   for (int i = 0; i < yearData; i++) {
     //    Serial.println(LED_cars[i].pos);
@@ -301,10 +301,20 @@ void doActuate() {
 
 // this function is called every actuate interval (200ms) and handles the houses lighting up
 void doActuateHouses() {
-  amountHouses++;
-  if (amountHouses >= NUM_LEDS_HOUSES) amountHouses = 1;
 
-  for (int i = 0; i <= min(amountHouses, NUM_LEDS_HOUSES - 1); i++) {
-    ledsHouse[i] = CHSV(25.5, 75 * 255, 57 * 255);// CRGB::Blue;
+  if (year != 0) {
+    for (int i = 0; i < NUM_LEDS_HOUSES; i++) {
+      if (i <= amountHouses) {
+        ledsHouse[i] = CHSV(25.5, 75 * 255, 57 * 255);// CRGB::Blue;
+      } else {
+        ledsHouse[i] = CRGB(0, 0, 0);
+      }
+    }
+  } else {
+    rainbowBarf += 0.5;
+    if (rainbowBarf > 255) {
+      rainbowBarf = 0;
+    }
+    fill_rainbow(ledsHouse, NUM_LEDS_HOUSES, int(rainbowBarf));
   }
 }
