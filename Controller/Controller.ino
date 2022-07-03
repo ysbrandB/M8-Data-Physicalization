@@ -57,7 +57,8 @@ uint8_t receiverAddresses[][8] =
   {0xBC, 0xFF, 0x4D, 0x81, 0x7D, 0x8D},
   {0xE8, 0xDB, 0x84, 0x9B, 0xB0, 0xBD},
   {0xF4, 0xCF, 0xA2, 0xD0, 0x7C, 0xBA},
-  {0xE0, 0xE2, 0xE6, 0x0C, 0x9F, 0x98}
+  {0xE0, 0xE2, 0xE6, 0x0C, 0x9F, 0x98},
+  {0x78, 0xE3, 0x6D, 0x18, 0x91, 0x88}
 };
 
 String receivedMacAdresses[membersof(receiverAddresses)];
@@ -74,6 +75,7 @@ volatile  int position;
 int phaseA = 4;
 int phaseB = 5;
 int debounceInt = 10;
+long buttonDebounce = 0;
 long debounceTimer;
 long lastDebounceTime;
 
@@ -134,6 +136,7 @@ void setup() {
 }
 
 void loop() {
+
   if (millis() - startTime >= interval) {
     startTime = millis();
     Serial.println();
@@ -159,13 +162,19 @@ void loop() {
   }
 
   if (digitalRead(BUTTON_PIN)) {
-    selected = ALL;
-  }
+    buttonDebounce++;
+    if (buttonDebounce > 10) {
+      selected = ALL;
+    }
 
+  } else {
+    buttonDebounce = 0;
+  }
   // Verify there is a new card and if the NUID has been readed
   if ( ! rfid.PICC_IsNewCardPresent() || ! rfid.PICC_ReadCardSerial()) {
     return;
   }
+
 
   for (byte i = 0; i < 5; i++) {
     if (rfid.uid.uidByte[0] == uids[i][0] && rfid.uid.uidByte[1] == uids[i][1] && rfid.uid.uidByte[2] == uids[i][2] && rfid.uid.uidByte[3] == uids[i][3]) {
